@@ -137,7 +137,13 @@ class NodeCall(threading.Thread):
 
     def run(self):
         try:
-            process = subprocess.Popen(self.cmd, bufsize=160*len(self.code), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=getStartupInfo())
+            env = None
+            settings = sublime.load_settings("EsFormatter.sublime-settings")
+            if settings.has("nodejs_module_path") and not "NODE_PATH" in os.environ:
+                env = os.environ.copy()
+                env["NODE_PATH"] = settings.get("nodejs_module_path")
+
+            process = subprocess.Popen(self.cmd, bufsize=160*len(self.code), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, startupinfo=getStartupInfo())
             if ST2:
                 stdout, stderr = process.communicate(self.code)
                 self.result = re.sub(r'(\r|\r\n|\n)\Z', '', stdout).decode('utf-8')
